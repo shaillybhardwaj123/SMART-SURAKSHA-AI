@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartSuraksha - Driver Safety System with Audio Alerts</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #fff;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        h1 span {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #fff;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+        }
+
+        button {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(78, 205, 196, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .risk-result {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        /* Drowsiness Section */
+        .webcam-section {
+            text-align: center;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            margin: 0 auto;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        video {
+            width: 100%;
+            height: auto;
+            transform: scaleX(-1);
+            display: block;
+        }
+
+        .drowsy-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .alert-box {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .alert-danger {
+            background: rgba(255, 50, 50, 0.9);
+            color: white;
+            border-left: 5px solid #ff0000;
+        }
+
+        .alert-warning {
+            background: rgba(255, 165, 0, 0.9);
+            color: white;
+            border-left: 5px solid #ff8c00;
+        }
+
+        .alert-success {
+            background: rgba(50, 205, 50, 0.9);
+            color: white;
+            border-left: 5px solid #00ff00;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .status-active {
+            background: #4ecdc4;
+            color: #1a1a2e;
+        }
+
+        .status-inactive {
+            background: #666;
+            color: white;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-stop {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+        }
+
+        .btn-stop:hover {
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        /* Volume indicator */
+        .volume-indicator {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚗 <span>SMART SURAKSHA</span> 🛡️</h1>
+        <div class="subtitle">AI-Powered Driver Safety System with Audio Alerts</div>
+
+        <!-- Risk Assessment Card -->
+        <div class="card">
+            <form id="riskForm">
+                <div class="form-group">
+                    <label>📊 Speed (km/h)</label>
+                    <input type="number" id="speed" name="speed" placeholder="Enter speed" required value="65">
+                </div>
+                <div class="form-group">
+                    <label>🌤️ Weather Condition</label>
+                    <select id="weather" name="weather">
+                        <option value="clear">☀️ Clear</option>
+                        <option value="rain">🌧️ Rain</option>
+                        <option value="fog">🌫️ Fog</option>
+                    </select>
+                </div>
+                <button type="submit">⚠️ CHECK RISK LEVEL</button>
+            </form>
+            <div class="risk-result" id="riskResult">
+                Ready — Enter speed & weather
+            </div>
+        </div>
+
+        <!-- Drowsiness Detection Card -->
+        <div class="card webcam-section">
+            <h3 style="color: white; margin-bottom: 15px;">😴 DROWSINESS DETECTION</h3>
+            
+            <div class="video-container">
+                <video id="webcam" autoplay playsinline></video>
+                <div class="drowsy-overlay">
+                    <div id="drowsyStatus" class="status-badge status-inactive">⚪ Not Active</div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button id="startCamBtn">🎥 START DROWSINESS DETECTION</button>
+                <button id="stopCamBtn" class="btn-stop" disabled>⏹️ STOP</button>
+            </div>
+
+            <div class="volume-indicator">
+                🔔 Audio alerts enabled - Keep volume up!
+            </div>
+
+            <div id="drowsyAlert" class="alert-box alert-success">
+                ✅ Click "Start" to begin monitoring
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const video = document.getElementById('webcam');
+        const startBtn = document.getElementById('startCamBtn');
+        const stopBtn = document.getElementById('stopCamBtn');
+        const drowsyStatus = document.getElementById('drowsyStatus');
+        const drowsyAlert = document.getElementById('drowsyAlert');
+        const riskResult = document.getElementById('riskResult');
+        const speedInput = document.getElementById('speed');
+        const weatherSelect = document.getElementById('weather');
+        const riskForm = document.getElementById('riskForm');
+
+        // Variables
+        let stream = null;
+        let detectionInterval = null;
+        let isDetecting = false;
+        let fatigueScore = 0;
+        let lastAlertTime = 0;
+        let audioContext = null;
+
+        // ========== BEEP SOUND FUNCTIONS ==========
+        function createBeep(frequency, duration, volume = 0.3) {
+            try {
+                // Create audio context if not exists
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                // Resume if suspended (browser auto-policy)
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                gainNode.gain.value = volume;
+                
+                oscillator.start();
+                
+                // Fade out and stop
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + duration);
+                oscillator.stop(audioContext.currentTime + duration);
+                
+                return true;
+            } catch (e) {
+                console.log("Audio error:", e);
+                return false;
+            }
+        }
+
+        // Warning beep (urgent - 3 fast beeps)
+        function playWarningBeep() {
+            createBeep(880, 0.15, 0.4);  // High beep
+            setTimeout(() => createBeep(880, 0.15, 0.4), 200);
+            setTimeout(() => createBeep(880, 0.3, 0.4), 400);
+        }
+
+        // Danger beep (very urgent - continuous sounding)
+        function playDangerBeep() {
+            createBeep(1000, 0.2, 0.5);
+            setTimeout(() => createBeep(1000, 0.2, 0.5), 250);
+            setTimeout(() => createBeep(1000, 0.3, 0.5), 500);
+            setTimeout(() => createBeep(1000, 0.2, 0.5), 800);
+        }
+
+        // Alert beep (single beep for general alerts)
+        function playAlertBeep() {
+            createBeep(660, 0.2, 0.3);
+        }
+
+        // Attention beep (double beep)
+        function playAttentionBeep() {
+            createBeep(440, 0.15, 0.25);
+            setTimeout(() => createBeep(440, 0.15, 0.25), 300);
+        }
+
+        // Test beep on start
+        function playStartupBeep() {
+            createBeep(523.25, 0.2, 0.2);  // C note
+            setTimeout(() => createBeep(587.33, 0.2, 0.2), 250);  // D note
+            setTimeout(() => createBeep(659.25, 0.3, 0.2), 500);  // E note
+        }
+
+        // Risk Calculation Function
+        function calculateRisk(speed, weather) {
+            let baseRisk = 0;
+            if (speed <= 50) baseRisk = 10;
+            else if (speed <= 80) baseRisk = 30;
+            else if (speed <= 100) baseRisk = 60;
+            else if (speed <= 120) baseRisk = 80;
+            else baseRisk = 95;
+
+            let multiplier = 1;
+            if (weather === 'rain') multiplier = 1.4;
+            else if (weather === 'fog') multiplier = 1.8;
+
+            let finalRisk = Math.min(99, Math.floor(baseRisk * multiplier));
+            
+            let message = '';
+            let color = '';
+            if (finalRisk < 30) {
+                message = '✅ LOW RISK - Safe driving';
+                color = '#4caf50';
+            } else if (finalRisk < 60) {
+                message = '⚠️ MODERATE RISK - Stay alert';
+                color = '#ff9800';
+            } else {
+                message = '🔴 HIGH RISK - Reduce speed immediately!';
+                color = '#f44336';
+                // Play beep for high risk
+                playWarningBeep();
+            }
+
+            if (weather === 'fog' && speed > 60) {
+                message += ' | 🌫️ FOG + High Speed!';
+                if (speed > 80) playAttentionBeep();
+            } else if (weather === 'rain' && speed > 70) {
+                message += ' | 💧 RAIN - Risk of hydroplaning!';
+                if (speed > 85) playAttentionBeep();
+            }
+
+            return { risk: finalRisk, message, color };
+        }
+
+        // Update Risk Display
+        function updateRisk() {
+            const speed = parseInt(speedInput.value) || 0;
+            const weather = weatherSelect.value;
+            const result = calculateRisk(speed, weather);
+            riskResult.innerHTML = `🚦 ${result.message} (Risk: ${result.risk}%)`;
+            riskResult.style.background = `rgba(0,0,0,0.7)`;
+            riskResult.style.borderLeft = `4px solid ${result.color}`;
+        }
+
+        // Form submit handler
+        riskForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            updateRisk();
+        });
+
+        // Initial risk update
+        updateRisk();
+
+        // Drowsiness Detection Simulation with Audio
+        function startDrowsinessDetection() {
+            if (!isDetecting) return;
+
+            // Simulate fatigue accumulation based on time
+            fatigueScore += Math.random() * 3 + 1;
+            
+            // Get current speed for context (faster speed = more fatigue)
+            const currentSpeed = parseInt(speedInput.value) || 0;
+            if (currentSpeed > 80) {
+                fatigueScore += 2;
+            }
+
+            // Random events for realistic detection
+            const randomEvent = Math.random();
+            const now = Date.now();
+            
+            let alertType = null;
+            let alertMessage = '';
+
+            // Eye closure simulation (microsleep) - Most dangerous
+            if (fatigueScore > 70 && randomEvent < 0.1 && (now - lastAlertTime) > 5000) {
+                alertType = 'danger';
+                alertMessage = '🔴 DROWSINESS ALERT! Eye closure detected! Please take a break! 🚨';
+                lastAlertTime = now;
+                fatigueScore -= 15;
+                // Play DANGER BEEP (loud, urgent)
+                playDangerBeep();
+                // Also create a visual flash effect
+                document.body.style.backgroundColor = '#ff000020';
+                setTimeout(() => document.body.style.backgroundColor = '', 500);
+            }
+            // Yawn detection
+            else if (fatigueScore > 50 && randomEvent < 0.08 && (now - lastAlertTime) > 4000) {
+                alertType = 'warning';
+                alertMessage = '⚠️ FATIGUE WARNING! Frequent yawning detected! Consider resting! 😴';
+                lastAlertTime = now;
+                fatigueScore -= 10;
+                // Play WARNING BEEP
+                playWarningBeep();
+            }
+            // Head nodding simulation
+            else if (fatigueScore > 60 && randomEvent < 0.07 && (now - lastAlertTime) > 4500) {
+                alertType = 'danger';
+                alertMessage = '🔴 CRITICAL! Head nodding detected! Pull over safely NOW! ⚠️';
+                lastAlertTime = now;
+                fatigueScore -= 12;
+                // Play DANGER BEEP
+                playDangerBeep();
+                // Flash red
+                document.body.style.backgroundColor = '#ff000030';
+                setTimeout(() => document.body.style.backgroundColor = '', 600);
+            }
+            // Blink frequency high (fatigue increasing)
+            else if (fatigueScore > 55 && randomEvent < 0.09 && (now - lastAlertTime) > 3500) {
+                alertType = 'warning';
+                alertMessage = '⚠️ Increased blink rate detected - Fatigue building up!';
+                lastAlertTime = now;
+                fatigueScore -= 8;
+                // Play ALERT BEEP
+                playAlertBeep();
+            }
+            // Normal attentive state
+            else if (fatigueScore < 40 && (now - lastAlertTime) > 8000) {
+                alertType = 'success';
+                alertMessage = '✅ Driver attentive - No drowsiness signs detected';
+            }
+            // Moderate warning with beep
+            else if (fatigueScore > 45 && (now - lastAlertTime) > 3000) {
+                alertType = 'warning';
+                alertMessage = `⚠️ Attention level: ${Math.floor(100 - fatigueScore)}% - Stay focused`;
+                // Play attention beep only occasionally
+                if (randomEvent < 0.3) {
+                    playAttentionBeep();
+                }
+            }
+
+            // Update UI with alert
+            if (alertType) {
+                drowsyAlert.className = `alert-box alert-${alertType}`;
+                drowsyAlert.innerHTML = alertMessage;
+                
+                // Flash the status badge
+                if (alertType === 'danger') {
+                    drowsyStatus.style.background = '#f44336';
+                    drowsyStatus.innerHTML = '⚠️ DROWSY!';
+                    
+                    // Also update risk display to show drowsiness impact
+                    const currentRiskMsg = riskResult.innerHTML;
+                    riskResult.style.background = 'rgba(244, 67, 54, 0.3)';
+                    setTimeout(() => {
+                        if (isDetecting) {
+                            riskResult.style.background = 'rgba(0,0,0,0.7)';
+                        }
+                    }, 2000);
+                } else if (alertType === 'warning') {
+                    drowsyStatus.style.background = '#ff9800';
+                    drowsyStatus.innerHTML = '😴 FATIGUED';
+                } else {
+                    drowsyStatus.style.background = '#4ecdc4';
+                    drowsyStatus.innerHTML = '👀 MONITORING';
+                }
+            }
+
+            // Update fatigue display
+            const fatiguePercent = Math.min(100, Math.floor(fatigueScore));
+            drowsyStatus.title = `Fatigue Level: ${fatiguePercent}%`;
+            
+            // Reset fatigue if too high (simulating break)
+            if (fatigueScore > 90) {
+                fatigueScore = 30;
+                drowsyAlert.className = 'alert-box alert-warning';
+                drowsyAlert.innerHTML = '🔄 High fatigue detected! System suggests taking a 15-minute break.';
+                playWarningBeep();
+                playWarningBeep();
+            }
+        }
+
+        // Start Webcam
+        async function startWebcam() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                await video.play();
+                return true;
+            } catch (err) {
+                console.error('Camera error:', err);
+                drowsyAlert.className = 'alert-box alert-danger';
+                drowsyAlert.innerHTML = '❌ Cannot access camera! Please check permissions.';
+                return false;
+            }
+        }
+
+        // Stop Webcam and Detection
+        function stopWebcam() {
+            if (detectionInterval) {
+                clearInterval(detectionInterval);
+                detectionInterval = null;
+            }
+            
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+                video.srcObject = null;
+            }
+            
+            isDetecting = false;
+            fatigueScore = 0;
+            
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            drowsyStatus.className = 'status-badge status-inactive';
+            drowsyStatus.innerHTML = '⚪ Not Active';
+            drowsyAlert.className = 'alert-box alert-success';
+            drowsyAlert.innerHTML = '✅ Drowsiness detection stopped. Click "Start" to begin monitoring.';
+        }
+
+        // Main Start Function
+        async function startDetection() {
+            // First, request camera permission and start webcam
+            const camStarted = await startWebcam();
+            if (!camStarted) return;
+            
+            // Initialize and resume audio context (required for browser autoplay policy)
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                await audioContext.resume();
+            }
+            
+            // Play startup sound
+            playStartupBeep();
+            
+            // Reset detection state
+            if (detectionInterval) clearInterval(detectionInterval);
+            
+            isDetecting = true;
+            fatigueScore = Math.random() * 20; // Random starting fatigue
+            
+            // Start detection loop (every 2 seconds for realistic simulation)
+            detectionInterval = setInterval(() => {
+                if (isDetecting) {
+                    startDrowsinessDetection();
+                }
+            }, 2000);
+            
+            // Update UI
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            drowsyStatus.className = 'status-badge status-active';
+            drowsyStatus.innerHTML = '👀 MONITORING...';
+            drowsyAlert.className = 'alert-box alert-success';
+            drowsyAlert.innerHTML = '🎥 Camera active! AI monitoring for drowsiness signs... 🔔 Audio alerts enabled';
+            
+            // Add engagement reset (user interaction reduces fatigue)
+            const resetFatigue = () => {
+                if (isDetecting && fatigueScore > 10) {
+                    fatigueScore = Math.max(10, fatigueScore - 8);
+                    drowsyAlert.className = 'alert-box alert-success';
+                    drowsyAlert.innerHTML = '✅ Driver interaction detected - Alertness improved!';
+                    // Play soft confirmation beep
+                    createBeep(523.25, 0.1, 0.15);
+                    setTimeout(() => {
+                        if (isDetecting && drowsyAlert.className !== 'alert-box alert-danger') {
+                            drowsyAlert.className = 'alert-box alert-success';
+                            drowsyAlert.innerHTML = '👀 AI monitoring active - Stay focused on road';
+                        }
+                    }, 2000);
+                }
+            };
+            
+            // Add event listeners for user engagement
+            document.addEventListener('mousemove', resetFatigue);
+            document.addEventListener('keypress', resetFatigue);
+            document.addEventListener('click', resetFatigue);
+            
+            // Store cleanup function
+            window._engagementCleanup = () => {
+                document.removeEventListener('mousemove', resetFatigue);
+                document.removeEventListener('keypress', resetFatigue);
+                document.removeEventListener('click', resetFatigue);
+            };
+        }
+
+        // Event Listeners
+        startBtn.addEventListener('click', startDetection);
+        stopBtn.addEventListener('click', () => {
+            stopWebcam();
+            if (window._engagementCleanup) window._engagementCleanup();
+        });
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            if (detectionInterval) {
+                clearInterval(detectionInterval);
+            }
+            if (audioContext) {
+                audioContext.close();
+            }
+        });
+
+        // Update risk when speed/weather changes
+        speedInput.addEventListener('input', updateRisk);
+        weatherSelect.addEventListener('change', updateRisk);
+
+        // Initialize audio on first user interaction (required by browsers)
+        document.body.addEventListener('click', function initAudio() {
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+                createBeep(440, 0.1, 0.1);
+            }
+        }, { once: true });
+    </script>
+</body>
+</html>
