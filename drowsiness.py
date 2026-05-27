@@ -1,6 +1,14 @@
 import cv2
 import time
-import winsound
+try:
+    import winsound
+except ImportError:
+    class WinsoundMock:
+        @staticmethod
+        def Beep(frequency, duration):
+            # Fallback for Linux/macOS where winsound is not available
+            print(f"🔊 [Beep Fallback] Freq: {frequency}Hz, Dur: {duration}ms")
+    winsound = WinsoundMock()
 
 face_cascade = cv2.CascadeClassifier(
     cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
