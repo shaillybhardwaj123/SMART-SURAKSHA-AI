@@ -1,3 +1,4 @@
+# Python / Workspace Ignores
 __pycache__/
 *.pyc
 *.pyo
@@ -9,3 +10,25 @@ env/
 *.log
 .DS_Store
 Thumbs.db
+.vscode/
+
+# Non-functional / Unrelated project files
+gh.zip
+gh_temp/
+Smart_Suraksha_Viva_Guide.pdf
+viva.py
+test_model.py
+check.py
+ai_module.py
+iot_module.py
+dataset.csv
+cars.xml
+MobileNetSSD_deploy.caffemodel
+MobileNetSSD_deploy.prototxt
+report/
+data/
+
+# Generated runtime files
+arduino_data.json
+status.txt
+*.pkl
