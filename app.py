@@ -1,7 +1,23 @@
+import os
+import sys
+import werkzeug.serving
+
+# Robust monkeypatch to intercept Flask CLI's server start and bind to 0.0.0.0 and $PORT
+original_run_simple = werkzeug.serving.run_simple
+def patched_run_simple(hostname, port, application, *args, **kwargs):
+    env_port = os.environ.get('PORT')
+    if env_port:
+        port = int(env_port)
+    hostname = '0.0.0.0'
+    return original_run_simple(hostname, port, application, *args, **kwargs)
+
+werkzeug.serving.run_simple = patched_run_simple
+if 'flask.cli' in sys.modules:
+    sys.modules['flask.cli'].run_simple = patched_run_simple
+
 from flask import Flask, render_template, request, jsonify
 from accident_model import predict_risk
 from ml_module import get_ml_module
-import os
 
 app = Flask(__name__)
 
