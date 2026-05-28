@@ -1,28 +1,8 @@
-import os
-import sys
-import werkzeug.serving
-
-# Robust monkeypatch to intercept Flask CLI's server start and bind to 0.0.0.0 and $PORT
-original_run_simple = werkzeug.serving.run_simple
-def patched_run_simple(hostname, port, application, *args, **kwargs):
-    env_port = os.environ.get('PORT')
-    if env_port:
-        port = int(env_port)
-    hostname = '0.0.0.0'
-    return original_run_simple(hostname, port, application, *args, **kwargs)
-
-werkzeug.serving.run_simple = patched_run_simple
-if 'flask.cli' in sys.modules:
-    sys.modules['flask.cli'].run_simple = patched_run_simple
-
 from flask import Flask, render_template, request, jsonify
 from accident_model import predict_risk
-from ml_module import get_ml_module
+import os
 
 app = Flask(__name__)
-
-# ML model startup pe load karo
-ml_model = get_ml_module()
 
 @app.route('/')
 def home():
@@ -30,50 +10,26 @@ def home():
 
 @app.route('/check_risk', methods=['POST'])
 def check_risk():
-    data    = request.get_json()
-    speed   = data.get('speed')
+    data = request.get_json() or {}
+    speed = data.get('speed')
     weather = data.get('weather')
-    result  = predict_risk(speed, weather)
+    result = predict_risk(speed, weather)
     return jsonify({'result': result})
-
-@app.route('/predict/iot', methods=['POST'])
-def predict_iot():
-    data     = request.get_json()
-    speed    = float(data.get('speed', 0))
-    distance = float(data.get('distance', 999))
-    weather  = data.get('weather', 'clear')
-
-    risk = predict_risk(speed, weather)
-    collision, prob = ml_model.predict_collision(speed, distance)
-
-    if distance < 30:
-        collision = True
-        risk = "HIGH"
-
-    return jsonify({
-        'risk':                  risk,
-        'collision':             collision,
-        'collision_probability': prob,
-        'speed':                 speed,
-        'distance':              distance
-    })
 
 @app.route('/get_iot_status')
 def get_iot_status():
-    """Returns demo/default IoT status (no Arduino on server)."""
     return jsonify({
-        "status":                "disconnected",
-        "distance":              999,
-        "speed":                 0,
-        "collision":             False,
+        "status": "disconnected",
+        "distance": 999,
+        "speed": 0,
+        "collision": False,
         "collision_probability": 0.0,
-        "risk":                  "LOW"
+        "risk": "LOW"
     })
 
 @app.route('/start_camera', methods=['POST'])
 def start_camera():
-    """Camera not available on cloud — returns stub response."""
-    return jsonify({'status': 'not_available', 'message': 'Camera not supported on cloud deployment'})
+    return jsonify({'status': 'not_available'})
 
 @app.route('/stop_camera', methods=['POST'])
 def stop_camera():
