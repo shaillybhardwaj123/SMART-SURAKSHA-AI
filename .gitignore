@@ -32,3 +32,15 @@ data/
 arduino_data.json
 status.txt
 *.pkl
+
+# Arduino / Hardware (not needed on cloud)
+arduino_bridge.py
+arduino_code.ino
+sensors.ino/
+drowsiness.py
+
+# Compiled python files outside __pycache__
+ai_module.cpython-314.pyc
+app.cpython-314.pyc
+iot_module.cpython-314.pyc
+ml_module.cpython-314.pyc

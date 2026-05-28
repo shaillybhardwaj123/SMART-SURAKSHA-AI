@@ -1,6 +1,5 @@
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
-from drowsiness import start_drowsiness
 
 # LOAD + CLEAN ONCE
 df = pd.read_csv("dataset_traffic_accident_prediction1.csv")
