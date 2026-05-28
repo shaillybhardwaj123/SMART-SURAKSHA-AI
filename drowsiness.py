@@ -86,13 +86,20 @@ def start_drowsiness():
                     cv2.FONT_HERSHEY_SIMPLEX, 1,
                     (0,0,255), 2)
 
-        cv2.imshow("Driver Monitoring", frame)
-
-        if cv2.waitKey(1) & 0xFF == 27:
-            break
+        try:
+            cv2.imshow("Driver Monitoring", frame)
+            if cv2.waitKey(1) & 0xFF == 27:
+                break
+        except Exception:
+            # Fallback for headless environments: sleep to limit CPU usage
+            time.sleep(0.03)
 
     cap.release()
-    cv2.destroyAllWindows()
+    try:
+        cv2.destroyAllWindows()
+    except Exception:
+        pass
+
 
 
 if __name__ == "__main__":
