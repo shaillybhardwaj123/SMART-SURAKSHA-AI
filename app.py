@@ -1,7 +1,19 @@
+import os
+import werkzeug.serving
+
+# Monkeypatch werkzeug.serving to force Flask run on 0.0.0.0 and dynamic port
+original_run_simple = werkzeug.serving.run_simple
+def patched_run_simple(hostname, port, application, *args, **kwargs):
+    env_port = os.environ.get('PORT')
+    if env_port:
+        port = int(env_port)
+    hostname = '0.0.0.0'
+    return original_run_simple(hostname, port, application, *args, **kwargs)
+werkzeug.serving.run_simple = patched_run_simple
+
 from flask import Flask, render_template, request, jsonify
 from accident_model import predict_risk
 from ml_module import get_ml_module
-import os
 
 app = Flask(__name__)
 
